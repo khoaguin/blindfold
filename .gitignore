@@ -30,3 +30,6 @@ outputs/
 
 # Per-run job params written by the notebook (owner emails etc.)
 code/researcher_code/to_submit/params.json
+
+# Deck build toolchain — node deps, regenerate via submission/deckbuild/build.js
+submission/deckbuild/node_modules/
