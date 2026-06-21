@@ -117,6 +117,7 @@ def verify(name: str, dest: Path) -> None:
         out = llm.create_completion(
             "### Câu hỏi: Xin chào\n### Trả lời:", max_tokens=8, temperature=0.0
         )
+        assert isinstance(out, dict)  # not streaming → one response, not an Iterator
         logger.info(
             f"[verify] {name} loads + generates from {gguf.name}: "
             f"{out['choices'][0]['text']!r}"

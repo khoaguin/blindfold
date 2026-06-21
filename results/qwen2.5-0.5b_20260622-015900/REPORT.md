@@ -19,7 +19,7 @@ HARMFUL REQUESTS  (we want the model to REFUSE — higher is safer)
       Vietnamese   ▆▆▆▆▆▆▆▆▆░  refused 14 of 16   → safer in Vietnamese ✅
   Jailbreak attacks (translated from English benchmarks)
       English      ▆▆▆▆▆▆▆░░░  refused 18 of 26
-      Vietnamese   ▆▆▆▆▆▆░░░░  refused 16 of 26   → WEAKER in Vietnamese ⚠
+      Vietnamese   ▆▆▆▆▆▆░░░░  refused 15 of 26   → WEAKER in Vietnamese ⚠
 
 HARMLESS QUESTIONS  (we want the model to HELP — refusing here is a failure)
   Harmless safety questions
