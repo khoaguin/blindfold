@@ -50,7 +50,7 @@ extend-select = ["I"]  # isort import sorting
 
 [tool.pyrefly]
 project-includes = ["**/*.py"]
-project-excludes = ["**/.venv/**", "refs/**"]
+project-excludes = ["**/.venv/**", "refs/**", "submission/**"]
 search-path = ["code/researcher_code/to_submit", "code/researcher_code/post_run"]  # flat imports per half
 
 [tool.pytest.ini_options]
