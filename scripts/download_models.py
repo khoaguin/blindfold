@@ -60,12 +60,14 @@ WEIGHTS = {
         "mlx",
         [*_DROP_FRAMEWORKS, "*.bin"],
     ),
-    # PhoGPT ships .bin weights + custom *.py modeling code (trust_remote_code) ->
-    # keep .bin and .py, only drop the other frameworks.
+    # PhoGPT's original transformers build has 2023-era custom modeling code that breaks
+    # on modern transformers (removed Llama rotary classes), so we run the GGUF build via
+    # llama.cpp instead. Keep only the Q4_K_M quant (4-bit, parity with the 4-bit qwen
+    # models); drop the larger Q8_0 + full-precision ggufs.
     "phogpt-4b": (
-        "vinai/PhoGPT-4B-Chat",
-        "transformers",
-        list(_DROP_FRAMEWORKS),
+        "vinai/PhoGPT-4B-Chat-gguf",
+        "gguf",
+        ["*Q8_0.gguf", "PhoGPT-4B-Chat.gguf", *_DROP_FRAMEWORKS, "*.bin"],
     ),
 }
 
@@ -107,6 +109,18 @@ def verify(name: str, dest: Path) -> None:
         )
         out = generate(model, tok, prompt=text, max_tokens=8, verbose=False)
         logger.info(f"[verify] {name} loads + generates from {dest}: {out!r}")
+    elif runtime == "gguf":
+        from llama_cpp import Llama
+
+        gguf = next(dest.glob("*.gguf"))
+        llm = Llama(model_path=str(gguf), n_ctx=2048, verbose=False)
+        out = llm.create_completion(
+            "### Câu hỏi: Xin chào\n### Trả lời:", max_tokens=8, temperature=0.0
+        )
+        logger.info(
+            f"[verify] {name} loads + generates from {gguf.name}: "
+            f"{out['choices'][0]['text']!r}"
+        )
     else:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
