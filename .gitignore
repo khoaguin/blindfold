@@ -1,0 +1,32 @@
+# Cloned third-party corpora — cite, don't commit (ViHSD/ViHOS/ViCTSD/Aya, etc.)
+data/raw/
+raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# references
+refs/
+
+# Planning artifacts — local-only, never commit
+.plans/
+# Local SyftBox working dirs from the demo notebook
+blindfold-network/
+
+# Secrets — never commit
+.env
+
+# Model weights — huge, never commit (download via scripts/download_models.py)
+models/
+
+# Ephemeral enclave job outputs (stable copy lives in results/)
+outputs/
+
+# Per-run job params written by the notebook (owner emails etc.)
+code/researcher_code/to_submit/params.json

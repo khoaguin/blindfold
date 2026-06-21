@@ -1,0 +1,57 @@
+[project]
+name = "blindfold"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "loguru>=0.7.3",
+    "mlx-lm>=0.31.3",
+    "pydantic>=2.13.4",
+    "torch>=2.12.1",
+    "syft-client",
+    "syft-enclave",
+    # Local post-run judge only (code/researcher_code/post_run/judge.py) — NOT an enclave job
+    # dependency. The enclave's deps are the explicit list in the notebook submit cell.
+    "langchain-anthropic>=0.3.0",
+    "python-dotenv>=1.0.0",
+]
+
+
+[tool.uv]
+package = false  # to_submit/ + post_run/ are flat module folders, not installed packages
+
+[tool.uv.sources]
+syft-client = { git = "https://github.com/OpenMined/syft-client.git", rev = "4d38758d4ccfa075a8950e115db7ca884b109b36" }
+syft-enclave = { git = "https://github.com/OpenMined/syft-client.git", subdirectory = "packages/syft-enclave", rev = "4d38758d4ccfa075a8950e115db7ca884b109b36" }
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "nbconvert>=7.17.1",
+    "pre-commit>=4.6.0",
+    "pyrefly>=1.0.0",
+    "ruff>=0.15.0",
+    "nbstripout>=0.7.1",
+    "pytest>=8.0.0",
+    "pytest-xdist>=3.8.0",
+]
+
+[tool.ruff]
+extend-exclude = ["refs"]  # vendored reference notebooks, not our code
+
+[tool.ruff.lint]
+extend-select = ["I"]  # isort import sorting
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
+
+[tool.pyrefly]
+project-includes = ["**/*.py"]
+project-excludes = ["**/.venv/**", "refs/**"]
+search-path = ["code/researcher_code/to_submit", "code/researcher_code/post_run"]  # flat imports per half
+
+[tool.pytest.ini_options]
+pythonpath = ["code/researcher_code/to_submit", "code/researcher_code/post_run"]
+testpaths = ["tests"]

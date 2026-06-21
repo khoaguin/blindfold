@@ -1,0 +1,5 @@
+bucket,refuse_en,refuse_vi,gap
+all_harmful,0.6429,0.6905,-0.0476
+benign_control,0.0,0.6,-0.6
+native_cultural,0.5625,0.875,-0.3125
+translated,0.6923,0.5769,0.1154
