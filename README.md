@@ -1,31 +1,30 @@
 # 🙈 Blindfold
 
-**Audit the blind spot, blindly.** Red-team an LLM on local Vietnamese / Global-South harms it was
-never tested for — without anyone trusting anyone.
+**Audit the blind spot, blindly.** Red-team an LLM on local Vietnamese / Global-South harms it was never tested for — without anyone trusting anyone, using secure enclave.
 
 Three parties who don't trust each other run **one** eval inside a sealed enclave. Neither side sees the
 other's secret; only a score comes out.
 
 ```mermaid
 flowchart LR
-    Lab["🏢 Lab<br/>private weights"]
-    Org["🛡️ Safety org<br/>private VN benchmark"]
-    Aud["🔍 Auditor<br/>eval code"]
+    Lab["🏢 Model Owner (AI Lab)<br/>private weights"]
+    Org["🛡️ Benchmark Owner (AI Safety Org)<br/>private VN benchmark"]
+    Aud["🔍 Researcher (AI Auditor)<br/>eval code · scores results"]
     subgraph E["🔒 Secure enclave · sealed memory"]
-      run["run · score · attest"]
+      run["run the eval · generate raw"]
     end
     Lab -- weights --> E
     Org -- prompts --> E
     Aud -- code --> E
     Lab -. approve .-> E
     Org -. approve .-> E
-    E == "only the scorecard" ==> Aud
+    E == "only the results" ==> Aud
     classDef secret fill:#fde2e9,stroke:#c0396b,color:#000
     class Lab,Org secret
 ```
 
-The lab never sees the prompts · the benchmark owner never sees the weights · neither can game the
-result. Built on [syft-client](https://github.com/OpenMined/syft-client)'s compute-to-data flow.
+The Model Owner never sees the prompts · the Benchmark Owner never sees the weights · neither can game
+the result. Built on [syft-client](https://github.com/OpenMined/syft-client)'s compute-to-data flow.
 
 ---
 
@@ -94,18 +93,23 @@ Models: `qwen2.5-0.5b` (start here) · `qwen2.5-3b` · `phogpt-4b` · `seallm-v3
 
 ```mermaid
 sequenceDiagram
-    actor Lab as 🏢 Lab
-    actor Org as 🛡️ Safety org
-    actor Aud as 🔍 Auditor
+    actor Lab as 🏢 Model Owner (AI Lab)
+    actor Org as 🛡️ Benchmark Owner (AI Safety Org)
+    actor Aud as 🔍 Researcher (AI Auditor)
     participant Enc as 🔒 Enclave
-    Lab->>Enc: upload weights (private)
-    Org->>Enc: upload benchmark (private)
-    Aud->>Enc: submit eval code
+    Lab->>Enc: upload model — mock (public) + private weights
+    Org->>Enc: upload benchmark — mock (public) + private prompts
+    Note over Lab,Aud: researcher builds the eval against the public mocks only
+    Aud->>Enc: submit eval code (to_submit/)
     Note over Lab,Org: both review the code<br/>+ approve (either can veto)
     Lab-->>Enc: ✔ approve
     Org-->>Enc: ✔ approve
-    Enc->>Enc: run in sealed memory · score
-    Enc-->>Aud: signed scorecard only
+    Enc->>Enc: run in sealed memory · generate raw responses (no verdict)
+    Enc-->>Aud: raw results (declassified)
+    Enc-->>Lab: raw results (declassified)
+    Enc-->>Org: raw results (declassified)
+    Note over Lab,Org: same result to every party · no one sees the other's secret
+    Aud->>Aud: score locally off-enclave → EN-vs-VN gap
 ```
 
 Runs at three levels of realism — this repo's notebook is **stage 1**:
@@ -137,6 +141,55 @@ blindfold/
 
 **Benchmark:** 47 bilingual prompts — scam (8) · medical (8) · jailbreak (26, MultiJail) · benign
 controls (5). Every harmful prompt cites a real VN source. Details: [`data/README.md`](data/README.md).
+
+---
+
+## Under the hood
+
+In the in-memory run (`1. enclave_eval_inmem.ipynb`), there is **no server**.
+
+Every party is a [SyftBox](https://github.com/OpenMined/syft-client) datasite —
+just a folder. Parties "talk" by reading/writing files in each other's boxes. The notebook roots all four under the gitignored `blindfold-network/`:
+
+```
+blindfold-network/
+├── model_owner/syftbox/       🏢 mock infer.py (public)  +  weights + real infer.py (private)
+├── benchmark_owner/syftbox/   🛡️ sample prompts (public) +  47 prompts (private)
+├── researcher/syftbox/        🔍 the eval job (main.py)
+└── enclave/syftbox/           🔒 the only box that receives both private assets, runs the job
+        (each role also gets a syftbox-events/ — syft's change log)
+```
+
+What moves between those folders when you Run All:
+
+```mermaid
+flowchart LR
+    R["🔍 researcher"] -->|"1 · submit job"| ENC["🔒 enclave"]
+    MO["🏢 model_owner<br/>weights (private)"] -->|"2 · approve + share"| ENC
+    BO["🛡️ benchmark_owner<br/>prompts (private)"] -->|"2 · approve + share"| ENC
+    ENC -->|"3 · run in-process → scorecard"| R
+    classDef secret fill:#fde2e9,stroke:#c0396b,color:#000
+    class MO,BO secret
+```
+
+Private assets are shared **only** with the enclave box; the researcher's job is copied *into* the
+enclave box and runs there — code travels to the data, never the reverse.
+
+### From notebook → real enclave
+
+The eval logic doesn't change. Only the **transport** and the **enclave host** do:
+
+| | this notebook (stage 1) | real deployment (stage 3) |
+|---|---|---|
+| parties | 4 clients, 1 process | 4 separate accounts / machines |
+| transport | local folders (`blindfold-network/`) | Google Drive — an untrusted pipe; every file **encrypted + signed** |
+| enclave | an in-process function call | GCP Confidential Space VM (AMD SEV — RAM encrypted, no login) |
+| trust proof | `verify_attestation()` stub | hardware-signed attestation token, verified by each peer |
+| approvals · mock/private split · code-to-data | ✅ | ✅ *byte-for-byte identical* |
+
+Swap the SyftBox backend (local → Drive) and run the enclave container on Confidential Space — the job
+code, dual-consent approval, mock/private split, and scorecard-only output are **the same**. The
+notebook *is* the production flow, minus the hardware.
 
 ---
 
