@@ -28,6 +28,17 @@ the result. Built on [syft-client](https://github.com/OpenMined/syft-client)'s c
 
 ---
 
+## Contents
+
+- [The finding](#the-finding)
+- [Quickstart](#quickstart)
+- [How a run flows](#how-a-run-flows)
+- [Repo map](#repo-map)
+- [Under the hood](#under-the-hood)
+  - [From notebook → real enclave](#from-notebook--real-enclave)
+
+---
+
 ## The finding
 
 Safety training is overwhelmingly English → **it doesn't transfer to Vietnamese.** The model fails in
