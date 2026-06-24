@@ -5,6 +5,12 @@
 Three parties who don't trust each other run **one** eval inside a sealed enclave. Neither side sees the
 other's secret; only a score comes out.
 
+> **TL;DR — just run a notebook:**
+> - **In-memory demo** (one process, no network — start here): [`notebooks/1. enclave_eval_inmem.ipynb`](notebooks/1.%20enclave_eval_inmem.ipynb) → **Run All**.
+> - **True enclave split** (3 parties, 3 separate notebooks): run [`notebooks/nbsplit/`](notebooks/nbsplit/) in order — `1. DO-model-owner` → `2. DO-benchmark-owner` → `3. DS-researcher`.
+>
+> Setup is just `just sync && just download-models --models qwen2.5-0.5b` (see [Quickstart](#quickstart)).
+
 ```mermaid
 flowchart LR
     Lab["🏢 Model Owner (AI Lab)<br/>private weights"]
@@ -140,7 +146,9 @@ is the code-to-data flow + the local-harms benchmark + the measured gap.
 
 ```
 blindfold/
-├── notebooks/                  # the demo (stage 1)
+├── notebooks/
+│   ├── 1. enclave_eval_inmem.ipynb   # in-memory demo — one process (stage 1)
+│   └── nbsplit/                      # true enclave — 3 separate party notebooks
 ├── data/                       # 47 EN↔VN prompts + builder  →  data/README.md
 ├── code/
 │   ├── model_owner_code/       # code of the model owner
